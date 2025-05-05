@@ -1,0 +1,51 @@
+const fs = require('fs');
+const { program } = require('commander');
+
+program
+  .requiredOption('-i, --input <path>', 'шлях до вхідного JSON-файлу')
+  .option('-o, --output <path>', 'шлях до вихідного файлу')
+  .option('-d, --display', 'вивести результат у консоль');
+
+program.parse();
+const options = program.opts();
+
+// Читання та парсинг JSON
+let data;
+try {
+  const fileContent = fs.readFileSync(options.input, 'utf8');
+  data = JSON.parse(fileContent);
+} catch (err) {
+  console.error('Cannot find input file');
+  process.exit(1);
+}
+
+// Пошук активу з найменшим значенням
+let minKey = null;
+let minValue = null;
+
+for (const key in data) {
+  const value = Number(data[key]);
+  if (!isNaN(value)) {
+    if (minValue === null || value < minValue) {
+      minValue = value;
+      minKey = key;
+    }
+  }
+}
+
+if (minKey === null) {
+  console.error("Не знайдено жодного числового значення у JSON.");
+  process.exit(1);
+}
+
+const result = `${minKey}:${minValue}`;
+
+// Вивід у консоль, якщо вказано --display
+if (options.display) {
+  console.log(result);
+}
+
+// Запис у файл, якщо вказано --output
+if (options.output) {
+  fs.writeFileSync(options.output, result, 'utf8');
+}
